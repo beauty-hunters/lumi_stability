@@ -1,18 +1,41 @@
+"""
+Script to download files from grid based on a YAML configuration.
+
+The script generates a bash script that uses the `alien_cp` command to copy files
+from the grid to a specified local output folder. The bash script is then executed
+in a JAliEn shell environment.
+"""
 import argparse
 import os
-import sys
 import yaml
 
 def create_bash_script(script_path, commands):
-    with open(script_path, 'w') as script_file:
+    """
+    Create a bash script to be executed in jalien shell.
+    
+    Parameters:
+    -----------
+    script_path : str
+        Path where the bash script will be created.
+    commands : list of str
+        List of commands to be included in the bash script.
+    """
+    with open(script_path, 'w', encoding="utf-8") as script_file:
         script_file.write("#!/bin/bash\n")
         for command in commands:
             script_file.write(f"{command}\n")
     os.chmod(script_path, 0o755)
 
 def download_file(cfg_path):
-
-    with open(cfg_path, 'r') as file:
+    """
+    Main function to download files based on the provided YAML configuration.
+    
+    Parameters:
+    -----------
+    cfg_path : str
+        Path to the YAML configuration file.
+    """
+    with open(cfg_path, 'r', encoding="utf-8") as file:
         config = yaml.safe_load(file)
 
     output_folder = config['output_folder']
@@ -27,7 +50,10 @@ def download_file(cfg_path):
             out_folder = os.path.join(output_folder, key, f"lbc_{lbc}")
             os.makedirs(out_folder, exist_ok=True)
 
-            commands.append(f"alien_cp {entry['dir']}/AnalysisResults.root file:{out_folder}/AnalysisResults.root")
+            commands.append(
+                f"alien_cp {entry['dir']}/AnalysisResults.root \
+                    file:{out_folder}/AnalysisResults.root"
+            )
 
 
     script_path = "download_files.sh"
