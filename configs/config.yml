@@ -1,5 +1,5 @@
-input: ../inputs/AnalysisResults.root
-output_dir: ../outputs
+input: inputs/AnalysisResults.root
+output_dir: outputs
 
 bc_types: ["BC_L"]
 detectors: ["FT0VTx", "FDD"]

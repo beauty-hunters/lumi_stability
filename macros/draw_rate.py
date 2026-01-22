@@ -197,7 +197,7 @@ def draw_ratio_vs_run(ratios: dict, config: dict):  # pylint: disable=too-many-l
                         fontsize=8,
                         rotation=90)
 
-        plt.gcf().set_size_inches((sum(durations)*0.0005, 7))
+        plt.gcf().set_size_inches((sum(durations)*0.0005 + 10, 7))
         plt.xlabel('Cumulative Run Time (min)')
         plt.ylabel('Ratio')
         plt.axhline(y=1, color='r', linestyle='--', alpha=0.5)
@@ -233,7 +233,7 @@ def draw_ratio_vs_run(ratios: dict, config: dict):  # pylint: disable=too-many-l
                         fontsize=8,
                         rotation=90)
 
-        plt.gcf().set_size_inches((sum(durations)*0.0005, 7))
+        plt.gcf().set_size_inches((sum(durations)*0.0005 + 10, 7))
         plt.xlabel('Cumulative Run Time (min)')
         plt.ylabel('Ratio - Mean')
         plt.axhline(y=0, color='r', linestyle='--', alpha=0.5)
