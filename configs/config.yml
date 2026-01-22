@@ -1,0 +1,9 @@
+input: ../inputs/AnalysisResults.root
+output_dir: ../outputs
+
+bc_types: ["BC_L"]
+detectors: ["FT0VTx", "FDD"]
+
+cross_sections:
+  FDD: 50.66 # mb
+  FT0VTx: 51.72 # mb
