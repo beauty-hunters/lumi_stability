@@ -33,6 +33,7 @@ def download_file(cfg_path):
     script_path = "download_files.sh"
     create_bash_script(script_path, commands)
     os.system(f"alienv setenv JAliEn-ROOT/latest -c ./{script_path}")
+    os.remove(script_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download files based on a YAML configuration.")
