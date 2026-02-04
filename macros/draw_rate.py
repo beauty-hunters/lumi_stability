@@ -3,8 +3,10 @@ import argparse
 import os
 from concurrent.futures import ProcessPoolExecutor
 import uproot
+from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 import yaml
 
 
@@ -24,6 +26,7 @@ def process_run(config: dict, run_name: str):  # pylint: disable=too-many-locals
     output_folder = config["output_dir"]
     bc_types = config["bc_types"]
     cross_sections = config["cross_sections"]
+    year = Path(input_file).parent.parent.parent.name.split("_")[0]
 
     with uproot.open(input_file) as file:
         lumi_folder = file["lumi-stability-p-p"]
@@ -73,7 +76,7 @@ def process_run(config: dict, run_name: str):  # pylint: disable=too-many-locals
             _, val_ref = bcs_vals.pop(0)
             for det, (bc, val) in zip(detectors[1:], bcs_vals):
                 ratio_vals = val / (val_ref + 1e-10)
-                ratio_vals *= (cross_sections[detectors[0]] / cross_sections[det])
+                ratio_vals *= (cross_sections[year][detectors[0]] / cross_sections[year][det])
                 non_zero_indices = ratio_vals != 0
                 run_ratios[det][bc_type] = ratio_vals[non_zero_indices]
                 ax2.plot(
@@ -268,7 +271,11 @@ def run_analysis(config_path: str):
     with uproot.open(input_file) as file:
         runs = file["lumi-stability-p-p"].keys(recursive=False)
 
-    _, ratios = draw_trigger_vs_time(config, runs)
+    hists, ratios = draw_trigger_vs_time(config, runs)
+    with open(f"{output_folder}/runs/hists.pkl", "wb") as f:
+        pickle.dump(hists, f)
+    with open(f"{output_folder}/runs/ratios.pkl", "wb") as f:
+        pickle.dump(ratios, f)
     draw_ratio_vs_run(ratios, config)
 
     # Create .gitignore to ignore all files in output folder
