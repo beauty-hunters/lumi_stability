@@ -47,7 +47,8 @@ def download_file(cfg_path):
             continue
         for entry in config[key]:
             lbc = entry['lbc']
-            out_folder = os.path.join(output_folder, key, f"lbc_{lbc}")
+            no_t0_for_leading = entry['no_t0_for_leading']
+            out_folder = os.path.join(output_folder, key, f"lbc_{lbc}", f"no_t0_{no_t0_for_leading}")
             os.makedirs(out_folder, exist_ok=True)
 
             commands.append(
