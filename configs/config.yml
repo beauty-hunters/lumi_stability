@@ -1,9 +1,13 @@
 input: inputs/AnalysisResults.root
 output_dir: outputs
 
-bc_types: ["BC_L"]
+bc_types: ["BC_L", "BC_SL"]
 detectors: ["FT0VTx", "FDD"]
 
 cross_sections:
-  FDD: 50.66 # mb
-  FT0VTx: 51.72 # mb
+  "2023":
+    FDD: 52.72 # mb  (49.69+49.57)/2
+    FT0VTx: 52.72 # mb  (52.76+52.68)/2
+  "2024":
+    FDD: 53.035 # mb  (50.61+50.24)/2
+    FT0VTx: 53.035 # mb  (53.21+52.86)/2
