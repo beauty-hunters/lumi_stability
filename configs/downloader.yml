@@ -42,22 +42,22 @@ output_folder: inputs
     no_t0_for_leading: true
 
 2023_thinned:
-  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0059/596026/197033
+  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0060/606788/202543
     lbc: 5
     no_t0_for_leading: false
-  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0059/599711/199239
+  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0060/606784/202570
     lbc: 5
     no_t0_for_leading: true
-  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0059/596027/197065
+  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0060/606787/202552
     lbc: 8
     no_t0_for_leading: false
-  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0059/599712/199255
+  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0060/606783/202579
     lbc: 8
     no_t0_for_leading: true
-  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0059/596025/197025
+  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0060/606789/202534
     lbc: 10
     no_t0_for_leading: false
-  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0059/599710/199231
+  - dir: /alice/cern.ch/user/a/alihyperloop/outputs/0060/606786/202561
     lbc: 10
     no_t0_for_leading: true
 
