@@ -3,7 +3,7 @@ import yaml
 import os
 
 
-def create_config(cfg_downloader, cfg_analysis, key, lbc, no_t0_for_leading, out_folder):
+def create_config(cfg_downloader, cfg_analysis, key, lbc, out_folder):
     """
     Create a new configuration dictionary for analysis based on downloader config.
     Parameters:
@@ -16,15 +16,13 @@ def create_config(cfg_downloader, cfg_analysis, key, lbc, no_t0_for_leading, out
         The key corresponding to the current dataset.
     lbc : int
         The LBC value for the current dataset.
-    no_t0_for_leading : bool
-        The no_t0_for_leading flag for the current dataset.
     out_folder : str
         The output folder path for the analysis.    
     """
     cfg_new = cfg_analysis.copy()
 
     input_analysis = cfg_downloader['output_folder']
-    cfg_new['input'] = os.path.join(input_analysis, key, f"lbc_{lbc}", f"no_t0_{no_t0_for_leading}", "AnalysisResults.root")
+    cfg_new['input'] = os.path.join(input_analysis, key, f"lbc_{lbc}", "AnalysisResults.root")
     cfg_new['output_dir'] = os.path.join(out_folder)
 
     return cfg_new
@@ -44,11 +42,11 @@ def run_analysis(downloader_cfg_path, analysis_cfg_path):
             continue
         for entry in cfg_downloader[key]:
             lbc = entry['lbc']
-            no_t0_for_leading = entry['no_t0_for_leading']
-            out_folder = os.path.join(output_folder, key, f"lbc_{lbc}", f"no_t0_{no_t0_for_leading}")
+            out_folder = os.path.join(output_folder, key, f"lbc_{lbc}")
+            print(out_folder)
             os.makedirs(out_folder, exist_ok=True)
 
-            cfg_new = create_config(cfg_downloader, cfg_analysis, key, lbc, no_t0_for_leading, out_folder)
+            cfg_new = create_config(cfg_downloader, cfg_analysis, key, lbc, out_folder)
 
             # Dump new config to a temporary file
             temp_cfg_path = f"temp_config_{key}_lbc{lbc}.yml"

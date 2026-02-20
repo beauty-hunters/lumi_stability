@@ -26,7 +26,7 @@ def process_run(config: dict, run_name: str):  # pylint: disable=too-many-locals
     output_folder = config["output_dir"]
     bc_types = config["bc_types"]
     cross_sections = config["cross_sections"]
-    year = Path(input_file).parent.parent.parent.name.split("_")[0]
+    year = Path(input_file).parent.parent.name.split("_")[0]
 
     with uproot.open(input_file) as file:
         lumi_folder = file["lumi-stability-p-p"]
