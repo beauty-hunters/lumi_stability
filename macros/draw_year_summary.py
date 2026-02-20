@@ -78,7 +78,7 @@ def draw_ratio_vs_require_t0_for_leading(ratios, output_folder, bc_type_sel, mas
     run_to_idx = {run: i for i, run in enumerate(all_runs_sorted)}
 
     for label in ratios_mean:
-        if label == "vdm": continue
+        #if label == "vdm": continue
         plt.figure()
         
         for lbc in sorted(ratios_mean[label].keys()):
@@ -121,15 +121,30 @@ def draw_ratio_vs_require_t0_for_leading(ratios, output_folder, bc_type_sel, mas
                             xerr=x_errors_master[plot_indices],
                             fmt='o', label=f'{label}, {det_key}, LBC={lbc}, no_t0_for_leading={no_t0_for_leading}'
                         )
+        if label == "vdm":
+            # Draw box across whole data taking period
+            for det_key in means:
+                # print(means[det_key][bc_type_sel][0]-stds[det_key][bc_type_sel][0])
+                plt.fill_between(
+                    [0, sum(durations_list)], 
+                    means[det_key][bc_type_sel][0]-stds[det_key][bc_type_sel][0], 
+                    means[det_key][bc_type_sel][0]+stds[det_key][bc_type_sel][0], 
+                    color='gray', 
+                    alpha=0.2, 
+                    edgecolor='none',
+                    label='vdM Reference'
+                )
 
         plt.gcf().set_size_inches((sum(durations_list)*0.0005 + 10, 7))
-        plt.xlabel('Cumulative Run Time (min)')
-        plt.ylabel('Ratio')
+        plt.xlabel('Cumulative Run Time (min)', fontsize=(sum(durations_list)*0.00015 + 10))
+        plt.ylabel('Ratio', fontsize=(sum(durations_list)*0.00015 + 10))
+        plt.tick_params(axis='both', labelsize=(sum(durations_list)*0.00013 + 10))
         plt.axhline(y=1, color='r', linestyle='--', alpha=0.5)
         plt.grid(True, which="both", ls="--", lw=0.5)
-        plt.legend()
+        plt.legend(fontsize=(sum(durations_list)*0.00015 + 10), loc='upper right')
         plt.tight_layout()
         plt.savefig(output_folder / f"year_summary_{label}_{bc_type_sel}.pdf")
+        plt.savefig(output_folder / f"year_summary_{label}_{bc_type_sel}.png", dpi=600)
         plt.close()
 
 def draw_ratio_vs_lbc(ratios, output_folder, bc_type_sel, no_t0_for_leading_sel, master_durations):
@@ -186,17 +201,19 @@ def draw_ratio_vs_lbc(ratios, output_folder, bc_type_sel, no_t0_for_leading_sel,
                         means[det_key][bc_type_sel],
                         yerr=stds[det_key][bc_type_sel],
                         xerr=x_errors_master[plot_indices],
-                        fmt='o', label=f'{label}, {det_key}, LBC={lbc}, no_t0_for_leading={no_t0_for_leading_sel}'
+                        fmt='o', label=f'{label}, {det_key}, LBC={lbc}, bc_type={bc_type_sel}, no_t0_for_leading={no_t0_for_leading_sel}'
                     )
 
         plt.gcf().set_size_inches((sum(durations_list)*0.0005 + 10, 7))
-        plt.xlabel('Cumulative Run Time (min)')
-        plt.ylabel('Ratio')
+        plt.xlabel('Cumulative Run Time (min)', fontsize=(sum(durations_list)*0.00015 + 10))
+        plt.ylabel('Ratio', fontsize=(sum(durations_list)*0.00015 + 10))
+        plt.tick_params(axis='both', labelsize=(sum(durations_list)*0.00013 + 10))
         plt.axhline(y=1, color='r', linestyle='--', alpha=0.5)
         plt.grid(True, which="both", ls="--", lw=0.5)
-        plt.legend()
+        plt.legend(fontsize=(sum(durations_list)*0.00015 + 10), loc='upper right')
         plt.tight_layout()
         plt.savefig(output_folder / f"year_summary_{label}_{bc_type_sel}_no_t0_for_leading_{no_t0_for_leading_sel}.pdf")
+        plt.savefig(output_folder / f"year_summary_{label}_{bc_type_sel}_no_t0_for_leading_{no_t0_for_leading_sel}.png", dpi=600)
         plt.close()
 
 def draw_ratio_vs_bc_type(ratios, output_folder, lbc_sel, no_t0_for_leading_sel, master_durations):
@@ -213,7 +230,7 @@ def draw_ratio_vs_bc_type(ratios, output_folder, lbc_sel, no_t0_for_leading_sel,
     run_to_idx = {run: i for i, run in enumerate(all_runs_sorted)}
 
     for label in ratios_mean:
-        if label == "vdm": continue
+        #if label == "vdm": continue
         plt.figure()
         
         ratio_data = ratios_mean[label][lbc_sel][no_t0_for_leading_sel]
@@ -253,15 +270,31 @@ def draw_ratio_vs_bc_type(ratios, output_folder, lbc_sel, no_t0_for_leading_sel,
                     xerr=x_errors_master[plot_indices],
                     fmt='o', label=f'{label}, {det_key}, bc_type={bc_type}, lbc={lbc_sel}, no_t0_for_leading={no_t0_for_leading_sel}'
                 )
+                if label == "vdm":
+                    # Draw box across whole data taking period
+                    for det_key in means:
+                        for bc_type in means[det_key]:
+                            if len(means[det_key][bc_type]) > 0:
+                                plt.fill_between(
+                                    [0, sum(durations_list)], 
+                                    means[det_key][bc_type][0]-stds[det_key][bc_type][0], 
+                                    means[det_key][bc_type][0]+stds[det_key][bc_type][0], 
+                                    color='gray', 
+                                    alpha=0.2, 
+                                    edgecolor='none',
+                                    label='vdM Reference'
+                                )
 
         plt.gcf().set_size_inches((sum(durations_list)*0.0005 + 10, 7))
-        plt.xlabel('Cumulative Run Time (min)')
-        plt.ylabel('Ratio')
+        plt.xlabel('Cumulative Run Time (min)', fontsize=(sum(durations_list)*0.00015 + 10))
+        plt.ylabel('Ratio', fontsize=(sum(durations_list)*0.00015 + 10))
+        plt.tick_params(axis='both', labelsize=(sum(durations_list)*0.00013 + 10))
         plt.axhline(y=1, color='r', linestyle='--', alpha=0.5)
         plt.grid(True, which="both", ls="--", lw=0.5)
-        plt.legend()
+        plt.legend(fontsize=(sum(durations_list)*0.00015 + 10), loc='upper right')
         plt.tight_layout()
         plt.savefig(output_folder / f"year_summary_{label}_lbc_{lbc_sel}_no_t0_for_leading_{no_t0_for_leading_sel}.pdf")
+        plt.savefig(output_folder / f"year_summary_{label}_lbc_{lbc_sel}_no_t0_for_leading_{no_t0_for_leading_sel}.png", dpi=600)
         plt.close()
 
 def draw_ratio_vs_label(ratios, output_folder, bc_type_sel, lbc_sel, no_t0_for_leading_sel, master_durations):
@@ -330,13 +363,15 @@ def draw_ratio_vs_label(ratios, output_folder, bc_type_sel, lbc_sel, no_t0_for_l
                     label='vdM Reference'
                 )
     plt.gcf().set_size_inches((sum(durations_list)*0.0005 + 10, 7))
-    plt.xlabel('Cumulative Run Time (min)')
-    plt.ylabel('Ratio')
+    plt.xlabel('Cumulative Run Time (min)', fontsize=(sum(durations_list)*0.00015 + 10))
+    plt.ylabel('Ratio', fontsize=(sum(durations_list)*0.00015 + 10))
+    plt.tick_params(axis='both', labelsize=(sum(durations_list)*0.00013 + 10))
     plt.axhline(y=1, color='r', linestyle='--', alpha=0.5)
     plt.grid(True, which="both", ls="--", lw=0.5)
-    plt.legend()
+    plt.legend(fontsize=(sum(durations_list)*0.00015 + 10), loc='upper right')
     plt.tight_layout()
     plt.savefig(output_folder / f"year_summary_lbc_{lbc_sel}_no_t0_for_leading_{no_t0_for_leading_sel}_{bc_type_sel}.pdf")
+    plt.savefig(output_folder / f"year_summary_lbc_{lbc_sel}_no_t0_for_leading_{no_t0_for_leading_sel}_{bc_type_sel}.png", dpi=600)
     plt.close()
 
 def draw_year_summary(year, config_analysis, config_downloader):

@@ -34,17 +34,38 @@ def process_run(config: dict, run_name: str):  # pylint: disable=too-many-locals
 
         run_hists = {}
         run_ratios = {}
+        run_mu = {}
+        run_corr_pileup = {}
 
+        hist_fs = lumi_folder[run_name]["FillingScheme"]
+        hist_tfs = lumi_folder[run_name]["TFsPerMinute"]
         # We store raw data in run_hists to make it picklable for return
         for detector in detectors:
             run_hists[detector] = {}
             run_ratios[detector] = {}
+            run_mu[detector] = {}
+            run_corr_pileup[detector] = {}
             for bc_type in bc_types:
                 hist = lumi_folder[run_name][detector][f"{bc_type}/nBCsVsTime"]
                 run_hists[detector][bc_type] = {
                     "values": hist.values(),
                     "edges": hist.axis().edges()
                 }
+                ratios = np.divide(hist.values() * 21085, hist_tfs.values(), out=np.zeros_like(hist.values()), where=hist_tfs.values() != 0)
+                run_mu[detector][bc_type] = sum(ratios)
+                non_zero = hist.values() != 0
+                if non_zero.any():
+                    # Calculate duration by trimming leading/trailing zeros
+                    start = np.argmax(non_zero)
+                    end = len(non_zero) - np.argmax(non_zero[::-1])
+                    run_mu[detector][bc_type] /= ((end - start) * 60)
+                    nbc = hist_fs.axis().labels()[0].split("_")
+                    nbc = [int(n[:-1]) for n in nbc if n.endswith("b")][0]
+                    run_mu[detector][bc_type] /= nbc
+                    run_mu[detector][bc_type] = -1. * np.log(1 - run_mu[detector][bc_type] / 11245.)
+                    run_corr_pileup[detector][bc_type] = run_mu[detector][bc_type] / (1 - np.exp(-run_mu[detector][bc_type]))
+                else: 
+                    run_corr_pileup[detector][bc_type] = 1.0
 
         _, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 9), gridspec_kw={'height_ratios': [3, 1]})
 
@@ -77,6 +98,7 @@ def process_run(config: dict, run_name: str):  # pylint: disable=too-many-locals
             for det, (bc, val) in zip(detectors[1:], bcs_vals):
                 ratio_vals = val / (val_ref + 1e-10)
                 ratio_vals *= (cross_sections[year][detectors[0]] / cross_sections[year][det])
+                ratio_vals *= run_corr_pileup[det][bc_type] / run_corr_pileup[detectors[0]][bc_type]
                 non_zero_indices = ratio_vals != 0
                 run_ratios[det][bc_type] = ratio_vals[non_zero_indices]
                 ax2.plot(
@@ -98,7 +120,7 @@ def process_run(config: dict, run_name: str):  # pylint: disable=too-many-locals
         plt.savefig(f"{output_folder}/runs/run_{run_name}_bunch_crossings_vs_time.png")
         plt.close()
 
-        return run_name, run_hists, run_ratios
+        return run_name, run_hists, run_ratios, run_mu, run_corr_pileup
 
 def draw_trigger_vs_time(config: dict, runs: list):
     """
@@ -120,15 +142,19 @@ def draw_trigger_vs_time(config: dict, runs: list):
     """
     hists = {}
     ratios = {}
+    mu = {}
+    corr_pileup = {}
 
-    with ProcessPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers=10) as executor:
         futures = [executor.submit(process_run, config, run) for run in runs]
         for future in futures:
-            run_name, run_hist, run_ratio = future.result()
+            run_name, run_hist, run_ratio, run_mu, run_corr_pileup = future.result()
             hists[run_name] = run_hist
             ratios[run_name] = run_ratio
+            mu[run_name] = run_mu
+            corr_pileup[run_name] = run_corr_pileup
 
-    return hists, ratios
+    return hists, ratios, mu, corr_pileup
 
 
 def draw_ratio_vs_run(ratios: dict, config: dict):  # pylint: disable=too-many-locals, too-many-statements
@@ -201,8 +227,8 @@ def draw_ratio_vs_run(ratios: dict, config: dict):  # pylint: disable=too-many-l
                         rotation=90)
 
         plt.gcf().set_size_inches((sum(durations)*0.0005 + 10, 7))
-        plt.xlabel('Cumulative Run Time (min)')
-        plt.ylabel('Ratio')
+        plt.xlabel('Cumulative Run Time (min)', fontsize=12)
+        plt.ylabel('Ratio', fontsize=12)
         plt.axhline(y=1, color='r', linestyle='--', alpha=0.5)
         # plt.gca().set_ylim(0.5, 1.5)
         plt.grid(True, which="both", ls="--", lw=0.5)
@@ -249,6 +275,134 @@ def draw_ratio_vs_run(ratios: dict, config: dict):  # pylint: disable=too-many-l
         plt.savefig(f"{output_folder}/ratio_{det}_{detectors[0]}_vs_run_meansubtracted.pdf")
         plt.close()
 
+def draw_mu_vs_run(mus: dict, config: dict):  # pylint: disable=too-many-locals, too-many-statements
+    """
+    Draw the mu values vs cumulative run time.
+    
+    Parameters
+    ----------
+    mus: dict
+        Dictionary containing mu values for each run.
+    config: dict
+        Configuration dictionary.
+    """
+    detectors = config["detectors"]
+    bc_types = config["bc_types"]
+    output_folder = config["output_dir"]
+
+    for det in detectors:
+        runs = {bc: [] for bc in bc_types}
+        mu_values = {bc: [] for bc in bc_types}
+        for bc_type in bc_types:
+
+            sorted_runs = sorted(mus.keys(), key=int)
+            for run in sorted_runs:
+                run_mus = mus[run]
+                if det in run_mus:
+                    runs[bc_type].append(int(run))
+                    mu_values[bc_type].append(run_mus[det][bc_type])
+
+            x_centers = list(range(len(runs[bc_type])))
+            x_errors = [0.5] * len(runs[bc_type])
+
+        # Ratio plot
+        plt.figure()
+        for bc_type in bc_types:
+            plt.errorbar(
+                x_centers,
+                mu_values[bc_type],
+                yerr=None,
+                xerr=x_errors,
+                fmt='o',
+                capsize=0,
+                elinewidth=1,
+                label=f'{det}, {bc_type}'
+            )
+        for i, run_id in enumerate(runs[bc_type]):
+            plt.annotate(str(run_id),
+                        (x_centers[i], mu_values[bc_type][i]),
+                        textcoords="offset points",
+                        xytext=(-10, 10),
+                        ha='center',
+                        fontsize=8,
+                        rotation=90)
+
+        plt.gcf().set_size_inches((len(runs[bc_type])*0.0005 + 10, 7))
+        plt.xlabel('Run index', fontsize=12)
+        plt.ylabel(r'$\mu$', fontsize=12)
+        # plt.gca().set_ylim(0.5, 1.5)
+        plt.grid(True, which="both", ls="--", lw=0.5)
+
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f"{output_folder}/mu_{det}_vs_run.png")
+        plt.savefig(f"{output_folder}/mu_{det}_vs_run.pdf")
+        plt.close()
+
+def run_corr_pileup(corr_mus: dict, config: dict):  # pylint: disable=too-many-locals, too-many-statements
+    """
+    Draw the mu values vs cumulative run time.
+    
+    Parameters
+    ----------
+    corr_mus: dict
+        Dictionary containing mu correction values for each run.
+    config: dict
+        Configuration dictionary.
+    """
+    detectors = config["detectors"]
+    bc_types = config["bc_types"]
+    output_folder = config["output_dir"]
+
+    for det in detectors:
+        runs = {bc: [] for bc in bc_types}
+        corr_values = {bc: [] for bc in bc_types}
+        for bc_type in bc_types:
+
+            sorted_runs = sorted(corr_mus.keys(), key=int)
+            for run in sorted_runs:
+                run_corr = corr_mus[run]
+                if det in run_corr:
+                    runs[bc_type].append(int(run))
+                    corr_values[bc_type].append(run_corr[det][bc_type])
+
+            x_centers = list(range(len(runs[bc_type])))
+            x_errors = [0.5] * len(runs[bc_type])
+
+        # Ratio plot
+        plt.figure()
+        for bc_type in bc_types:
+            plt.errorbar(
+                x_centers,
+                corr_values[bc_type],
+                yerr=None,
+                xerr=x_errors,
+                fmt='o',
+                capsize=0,
+                elinewidth=1,
+                label=f'{det}, {bc_type}'
+            )
+        for i, run_id in enumerate(runs[bc_type]):
+            plt.annotate(str(run_id),
+                        (x_centers[i], corr_values[bc_type][i]),
+                        textcoords="offset points",
+                        xytext=(-10, 10),
+                        ha='center',
+                        fontsize=8,
+                        rotation=90)
+
+        plt.gcf().set_size_inches((len(runs[bc_type])*0.0005 + 10, 7))
+        plt.xlabel('Run index', fontsize=12)
+        plt.ylabel(rf'$\mathrm{{corr}}^{{{det}}}_{{\mathrm{{pile\_up}}}}$', fontsize=12)
+        # plt.gca().set_ylim(0.5, 1.5)
+        plt.grid(True, which="both", ls="--", lw=0.5)
+
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f"{output_folder}/corr_mu_{det}_vs_run.png")
+        plt.savefig(f"{output_folder}/corr_mu_{det}_vs_run.pdf")
+        plt.close()
+
 
 def run_analysis(config_path: str):
     """
@@ -271,12 +425,18 @@ def run_analysis(config_path: str):
     with uproot.open(input_file) as file:
         runs = file["lumi-stability-p-p"].keys(recursive=False)
 
-    hists, ratios = draw_trigger_vs_time(config, runs)
+    hists, ratios, mu, corr_pileup = draw_trigger_vs_time(config, runs)
     with open(f"{output_folder}/runs/hists.pkl", "wb") as f:
         pickle.dump(hists, f)
     with open(f"{output_folder}/runs/ratios.pkl", "wb") as f:
         pickle.dump(ratios, f)
+    with open(f"{output_folder}/runs/mu.pkl", "wb") as f:
+        pickle.dump(mu, f)
+    with open(f"{output_folder}/runs/corr_pileup.pkl", "wb") as f:
+        pickle.dump(corr_pileup, f)
     draw_ratio_vs_run(ratios, config)
+    draw_mu_vs_run(mu, config)
+    run_corr_pileup(corr_pileup, config)
 
     # Create .gitignore to ignore all files in output folder
     gitignore_path = f"{output_folder}/.gitignore"
