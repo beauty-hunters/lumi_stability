@@ -1,8 +1,8 @@
 input: inputs/AnalysisResults.root
 output_dir: outputs
 
-bc_types: ["BC_L", "BC_SL"]
-detectors: ["FT0VTx", "FDD"]
+bc_types: ["BC_B", "BC_L", "BC_LE"] #["BC_SL_FT0", "BC_NSL_FT0"] #["BC_B", "BC_L", "BC_LE", "BC_SL_FDD"]
+detectors: ["FT0VTx", "FDD"] #["FT0VTx", "FDD"]
 
 cross_sections:
   "2023":
